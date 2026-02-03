@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"github.com/nikhilsbhat/ingress-traefik-converter/pkg/configs"
+	"github.com/nikhilsbhat/ingress-traefik-converter/pkg/converters/models"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	traefik "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -9,13 +10,13 @@ import (
 
 /* ---------------- PROXY BUFFER SIZE ---------------- */
 
-// ProxyBufferSize handles the below annotations.
+// ProxyBufferSizes handles the below annotations.
 // Annotations:
 //   - "nginx.ingress.kubernetes.io/proxy-buffer-size"
-func ProxyBufferSize(ctx configs.Context, opts configs.Options) {
+func ProxyBufferSizes(ctx configs.Context, opts configs.Options) {
 	ctx.Log.Debug("running converter ProxyBufferSize")
 
-	val, ok := ctx.Annotations["nginx.ingress.kubernetes.io/proxy-buffer-size"]
+	val, ok := ctx.Annotations[string(models.ProxyBufferSize)]
 	if !ok {
 		return
 	}
@@ -23,7 +24,8 @@ func ProxyBufferSize(ctx configs.Context, opts configs.Options) {
 	// Default: warn + ignore
 	if !opts.ProxyBufferHeuristic {
 		ctx.Result.Warnings = append(ctx.Result.Warnings,
-			"proxy-buffer-size has no equivalent in Traefik and was ignored",
+			"proxy-buffer-size has no equivalent in Traefik and was ignored\n   "+
+				"Traefik does not expose upstream buffer sizing, it does not buffer responses the same way and uses Go’s HTTP stack",
 		)
 
 		return

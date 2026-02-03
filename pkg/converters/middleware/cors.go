@@ -5,9 +5,8 @@ import (
 	"strings"
 
 	"github.com/nikhilsbhat/ingress-traefik-converter/pkg/configs"
+	"github.com/nikhilsbhat/ingress-traefik-converter/pkg/converters/models"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
-	traefik "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 /* ---------------- CORS ---------------- */
@@ -21,33 +20,32 @@ import (
 //   - "nginx.ingress.kubernetes.io/cors-allow-credentials"
 //   - "nginx.ingress.kubernetes.io/cors-max-age"
 //   - "nginx.ingress.kubernetes.io/cors-expose-headers"
-//   - "nginx.ingress.kubernetes.io/cors-expose-headers"
 func CORS(ctx configs.Context) error {
 	ctx.Log.Debug("running converter CORS")
 
-	if ctx.Annotations["nginx.ingress.kubernetes.io/enable-cors"] != "true" {
+	if ctx.Annotations[string(models.EnableCORS)] != "true" {
 		return nil
 	}
 
 	headers := &dynamic.Headers{}
 
-	if v := ctx.Annotations["nginx.ingress.kubernetes.io/cors-allow-origin"]; v != "" {
+	if v := ctx.Annotations[string(models.CorsAllowOrigin)]; v != "" {
 		headers.AccessControlAllowOriginList = headersNeat(v)
 	}
 
-	if v := ctx.Annotations["nginx.ingress.kubernetes.io/cors-allow-methods"]; v != "" {
+	if v := ctx.Annotations[string(models.CorsAllowMethods)]; v != "" {
 		headers.AccessControlAllowMethods = headersNeat(v)
 	}
 
-	if v := ctx.Annotations["nginx.ingress.kubernetes.io/cors-allow-headers"]; v != "" {
+	if v := ctx.Annotations[string(models.CorsAllowHeaders)]; v != "" {
 		headers.AccessControlAllowHeaders = headersNeat(v)
 	}
 
-	if v := ctx.Annotations["nginx.ingress.kubernetes.io/cors-allow-credentials"]; v == "true" {
+	if v := ctx.Annotations[string(models.CorsAllowCredentials)]; v == "true" {
 		headers.AccessControlAllowCredentials = true
 	}
 
-	if v := ctx.Annotations["nginx.ingress.kubernetes.io/cors-max-age"]; v != "" {
+	if v := ctx.Annotations[string(models.CorsMaxAge)]; v != "" {
 		secs, err := strconv.ParseInt(v, 10, 64)
 		if err != nil {
 			return err
@@ -56,25 +54,13 @@ func CORS(ctx configs.Context) error {
 		headers.AccessControlMaxAge = secs
 	}
 
-	if v := ctx.Annotations["nginx.ingress.kubernetes.io/cors-expose-headers"]; v != "" {
+	if v := ctx.Annotations[string(models.CorsExposeHeaders)]; v != "" {
 		headers.AccessControlExposeHeaders = headersNeat(v)
 	}
 
-	if v := ctx.Annotations["nginx.ingress.kubernetes.io/cors-expose-headers"]; v != "" {
-		headers.AccessControlExposeHeaders = headersNeat(v)
-	}
-
-	ctx.Result.Middlewares = append(ctx.Result.Middlewares, &traefik.Middleware{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: traefik.SchemeGroupVersion.String(),
-			Kind:       "Middleware",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      mwName(ctx, "cors"),
-			Namespace: ctx.Namespace,
-		},
-		Spec: traefik.MiddlewareSpec{Headers: headers},
-	})
+	ctx.Result.Middlewares = append(ctx.Result.Middlewares,
+		newHeadersMiddleware(ctx, "cors", headers),
+	)
 
 	return nil
 }

@@ -3,18 +3,19 @@ package ingressroute
 import (
 	"strings"
 
+	"github.com/nikhilsbhat/ingress-traefik-converter/pkg/converters/models"
 	"github.com/nikhilsbhat/ingress-traefik-converter/pkg/errors"
 )
 
 func resolveScheme(
 	annotations map[string]string,
 ) (string, error) {
-	if annotations["nginx.ingress.kubernetes.io/grpc-backend"] == "true" {
+	if annotations[string(models.GrpcBackend)] == "true" {
 		return "h2c", nil
 	}
 
 	switch strings.ToUpper(
-		annotations["nginx.ingress.kubernetes.io/backend-protocol"],
+		annotations[string(models.BackendProtocol)],
 	) {
 	case "", "HTTP":
 		return "http", nil
@@ -42,11 +43,11 @@ func entryPointsForScheme(scheme string) []string {
 
 // NeedsIngressRoute makes the decision on requirement of ingress routes.
 func NeedsIngressRoute(ann map[string]string) bool {
-	if ann["nginx.ingress.kubernetes.io/grpc-backend"] == "true" {
+	if ann[string(models.GrpcBackend)] == "true" {
 		return true
 	}
 
-	if _, ok := ann["nginx.ingress.kubernetes.io/backend-protocol"]; ok {
+	if _, ok := ann[string(models.BackendProtocol)]; ok {
 		return true
 	}
 

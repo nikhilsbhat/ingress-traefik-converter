@@ -1,7 +1,10 @@
 package middleware
 
 import (
+	"strings"
+
 	"github.com/nikhilsbhat/ingress-traefik-converter/pkg/configs"
+	"github.com/nikhilsbhat/ingress-traefik-converter/pkg/converters/models"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	traefik "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -9,14 +12,22 @@ import (
 
 /* ---------------- REWRITE ---------------- */
 
-// RewriteTarget handles the below annotations.
+// RewriteTargets handles the below annotations.
 // Annotations:
 //   - "nginx.ingress.kubernetes.io/rewrite-target"
-func RewriteTarget(ctx configs.Context) {
+func RewriteTargets(ctx configs.Context) {
 	ctx.Log.Debug("running converter RewriteTarget")
 
-	val, ok := ctx.Annotations["nginx.ingress.kubernetes.io/rewrite-target"]
+	val, ok := ctx.Annotations[string(models.RewriteTarget)]
 	if !ok {
+		return
+	}
+
+	if strings.Contains(val, "$") {
+		ctx.Result.Warnings = append(ctx.Result.Warnings,
+			"rewrite-target uses capture groups which cannot be safely converted without path context",
+		)
+
 		return
 	}
 
@@ -36,4 +47,24 @@ func RewriteTarget(ctx configs.Context) {
 			},
 		},
 	})
+}
+
+func newRewriteMiddleware(
+	ctx configs.Context,
+	name string,
+	regex *dynamic.ReplacePathRegex,
+) *traefik.Middleware {
+	return &traefik.Middleware{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: traefik.SchemeGroupVersion.String(),
+			Kind:       "Middleware",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      mwName(ctx, name),
+			Namespace: ctx.Namespace,
+		},
+		Spec: traefik.MiddlewareSpec{
+			ReplacePathRegex: regex,
+		},
+	}
 }

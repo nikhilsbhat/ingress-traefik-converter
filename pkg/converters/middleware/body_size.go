@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/nikhilsbhat/ingress-traefik-converter/pkg/configs"
+	"github.com/nikhilsbhat/ingress-traefik-converter/pkg/converters/models"
 	"github.com/nikhilsbhat/ingress-traefik-converter/pkg/errors"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	traefik "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
@@ -18,7 +19,7 @@ import (
 func BodySize(ctx configs.Context) error {
 	ctx.Log.Debug("running converter BodySize")
 
-	val, ok := ctx.Annotations["nginx.ingress.kubernetes.io/proxy-body-size"]
+	val, ok := ctx.Annotations[string(models.ProxyBodySize)]
 	if !ok {
 		return nil
 	}

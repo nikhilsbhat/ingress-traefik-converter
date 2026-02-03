@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"github.com/nikhilsbhat/ingress-traefik-converter/pkg/configs"
+	"github.com/nikhilsbhat/ingress-traefik-converter/pkg/converters/models"
 	"github.com/traefik/traefik/v3/pkg/config/dynamic"
 	traefik "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,8 +17,8 @@ import (
 func SSLRedirect(ctx configs.Context) {
 	ctx.Log.Debug("running converter SSLRedirect")
 
-	ssl := ctx.Annotations["nginx.ingress.kubernetes.io/ssl-redirect"]
-	force := ctx.Annotations["nginx.ingress.kubernetes.io/force-ssl-redirect"]
+	ssl := ctx.Annotations[string(models.SslRedirect)]
+	force := ctx.Annotations[string(models.ForceSslRedirect)]
 
 	if ssl != "true" && force != "true" {
 		return

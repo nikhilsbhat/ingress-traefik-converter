@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"github.com/nikhilsbhat/ingress-traefik-converter/pkg/configs"
+	"github.com/nikhilsbhat/ingress-traefik-converter/pkg/converters/models"
 	traefik "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -15,7 +16,7 @@ import (
 func BasicAuth(ctx configs.Context) {
 	ctx.Log.Debug("running converter BasicAuth")
 
-	if ctx.Annotations["nginx.ingress.kubernetes.io/auth-type"] != "basic" {
+	if ctx.Annotations[string(models.AuthType)] != "basic" {
 		return
 	}
 
@@ -30,8 +31,8 @@ func BasicAuth(ctx configs.Context) {
 		},
 		Spec: traefik.MiddlewareSpec{
 			BasicAuth: &traefik.BasicAuth{
-				Secret: ctx.Annotations["nginx.ingress.kubernetes.io/auth-secret"],
-				Realm:  ctx.Annotations["nginx.ingress.kubernetes.io/auth-realm"],
+				Secret: ctx.Annotations[string(models.AuthSecret)],
+				Realm:  ctx.Annotations[string(models.AuthRealm)],
 			},
 		},
 	})

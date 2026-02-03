@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/nikhilsbhat/ingress-traefik-converter/pkg/configs"
+	"github.com/nikhilsbhat/ingress-traefik-converter/pkg/converters/models"
 	traefik "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -17,7 +18,7 @@ import (
 func RateLimit(ctx configs.Context) {
 	ctx.Log.Debug("running converter RateLimit")
 
-	rps, ok := ctx.Annotations["nginx.ingress.kubernetes.io/limit-rps"]
+	rps, ok := ctx.Annotations[string(models.LimitRPS)]
 	if !ok {
 		return
 	}
@@ -27,7 +28,7 @@ func RateLimit(ctx configs.Context) {
 	avg, _ := strconv.Atoi(rps)
 	burst := avg * averageValue
 
-	if m := ctx.Annotations["nginx.ingress.kubernetes.io/limit-burst-multiplier"]; m != "" {
+	if m := ctx.Annotations[string(models.LimitBurstMultiplier)]; m != "" {
 		if v, err := strconv.Atoi(m); err == nil {
 			burst = avg * v
 		}

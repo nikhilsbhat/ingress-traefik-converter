@@ -11,6 +11,7 @@ import (
 
 	"github.com/nikhilsbhat/ingress-traefik-converter/pkg/configs"
 	"github.com/nikhilsbhat/ingress-traefik-converter/pkg/convert"
+	"github.com/nikhilsbhat/ingress-traefik-converter/pkg/converters/models"
 	"github.com/nikhilsbhat/ingress-traefik-converter/pkg/render"
 	"github.com/nikhilsbhat/ingress-traefik-converter/version"
 	"github.com/spf13/cobra"
@@ -75,6 +76,31 @@ func getImportCommand() *cobra.Command {
 			}
 
 			logger.Info("nginx ingress to traefik conversion completed")
+
+			return nil
+		},
+	}
+
+	importCommand.SilenceErrors = true
+	registerCommonFlags(importCommand)
+	registerImportFlags(importCommand)
+
+	return importCommand
+}
+
+func getSupportedAnnotationCommand() *cobra.Command {
+	importCommand := &cobra.Command{
+		Use:     "supported-annotations [flags]",
+		Short:   "list supported annotaions",
+		Long:    "Command list all the annotations that converter supports",
+		Example: ``,
+		PreRunE: setCLIClient,
+		RunE: func(_ *cobra.Command, _ []string) error {
+			annotations := models.GetAnnotations()
+
+			for _, annoation := range annotations {
+				fmt.Printf("%s\n", annoation)
+			}
 
 			return nil
 		},

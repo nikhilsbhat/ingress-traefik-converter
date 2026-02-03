@@ -14,7 +14,7 @@ import (
 //
 //	-
 func Run(ctx configs.Context, opts configs.Options) error {
-	middleware.RewriteTarget(ctx)
+	middleware.RewriteTargets(ctx)
 	middleware.SSLRedirect(ctx)
 	middleware.BasicAuth(ctx)
 
@@ -30,8 +30,10 @@ func Run(ctx configs.Context, opts configs.Options) error {
 
 	middleware.ExtraAnnotations(ctx)
 	tls.HandleAuthTLSVerifyClient(ctx)
-	middleware.ConfigurationSnippet(ctx)
-	middleware.ProxyBufferSize(ctx, opts) // 👈 heuristic-aware
+	middleware.ConfigurationSnippets(ctx)
+	middleware.ProxyBufferSizes(ctx, opts) // 👈 heuristic-aware
+
+	middleware.UpstreamVHost(ctx)
 
 	if ingressroute.NeedsIngressRoute(ctx.Annotations) {
 		if err := ingressroute.BuildIngressRoute(ctx); err != nil {
