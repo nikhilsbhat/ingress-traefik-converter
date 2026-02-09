@@ -89,6 +89,49 @@ The goal of the CLI is to make migrations predictable and reviewable, not to hid
 
 ---
 
+## 📌 How this differs from Traefik’s native NGINX migration
+
+Traefik provides an official guide for migrating from NGINX Ingress to Traefik here:
+
+- https://doc.traefik.io/traefik/migrate/nginx-to-traefik/
+
+That guide focuses on **native Ingress compatibility** and covers only the subset of NGINX annotations that Traefik can interpret directly.
+
+**Ingress Traefik Converter is not an alternative to that migration path.**
+
+Instead, this tool goes further and focuses on **CRD-native, production-safe migrations**:
+
+- It analyzes NGINX annotations that Traefik does **not** support natively
+- It generates Traefik CRDs (`IngressRoute`, `Middleware`, `TLSOption`) where a safe and explicit mapping exists
+- It detects, warns about, and skips annotations that cannot be represented correctly
+- It never relies on Traefik’s Ingress compatibility layer
+- It never injects raw or unsafe configuration into Traefik
+
+In particular, this tool helps with annotations listed as **unsupported by Traefik’s Ingress-NGINX compatibility layer**, documented here:
+
+- https://doc.traefik.io/traefik-hub/api-gateway/reference/routing/kubernetes/ref-ingress-nginx#unsupported-nginx-annotations
+
+Where possible, the converter:
+- Maps these annotations to **Traefik-native CRDs**
+- Or emits **explicit warnings** when no safe equivalent exists
+
+### When should I use this tool?
+
+- Use Traefik’s native migration when your setup fits its supported subset of annotations
+- Use **Ingress Traefik Converter** when you:
+  - Rely on complex or unsupported NGINX annotations
+  - Want CRD-native Traefik configuration instead of Ingress compatibility mode
+  - Need explicit, reviewable, production-safe migration output
+
+### What this tool will not do
+
+- It will not attempt lossy or unsafe conversions
+- It will not silently change behavior
+- It will not pretend NGINX-specific features exist in Traefik
+
+The goal is **correctness, transparency, and safety**, not “make it work at any cost”.
+
+---
 ## Installation
 
 * Recommend installing released versions. Release binaries are available on the [releases](https://github.com/nikhilsbhat/ingress-traefik-converter/releases) page.
