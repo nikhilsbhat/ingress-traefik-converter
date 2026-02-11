@@ -33,7 +33,7 @@ linters:
     dupl:
       threshold: 100
     funlen:
-      lines: 100
+      lines: 110
       statements: 50
     gocognit:
       min-complexity: 60

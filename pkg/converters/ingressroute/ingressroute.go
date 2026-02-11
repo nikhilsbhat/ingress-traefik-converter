@@ -2,8 +2,11 @@ package ingressroute
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
 
 	"github.com/nikhilsbhat/ingress-traefik-converter/pkg/configs"
+	"github.com/nikhilsbhat/ingress-traefik-converter/pkg/converters/models"
 	"github.com/nikhilsbhat/ingress-traefik-converter/pkg/converters/tls"
 	traefik "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	netv1 "k8s.io/api/networking/v1"
@@ -15,6 +18,7 @@ import (
 // Annotations:
 //   - "nginx.ingress.kubernetes.io/backend-protocol"
 //   - "nginx.ingress.kubernetes.io/grpc-backend"
+//   - "nginx.ingress.kubernetes.io/use-regex"
 func BuildIngressRoute(ctx configs.Context) error {
 	ing := ctx.Ingress
 
@@ -23,6 +27,8 @@ func BuildIngressRoute(ctx configs.Context) error {
 	if err != nil {
 		return err
 	}
+
+	useRegex := strings.ToLower(ctx.Annotations[string(models.UseRegex)]) == "true"
 
 	routes := make([]traefik.Route, 0)
 	seen := make(map[string]struct{}) // dedup key set
@@ -40,14 +46,23 @@ func BuildIngressRoute(ctx configs.Context) error {
 				continue
 			}
 
-			pathMatch := buildPathMatch(path)
+			pathMatch, ok := buildPathMatch(path, useRegex)
+			if useRegex && !ok {
+				msg := fmt.Sprintf("use-regex is set but path '%s' is not a valid Go regex for Traefik; fell back to PathPrefix", path.Path)
+
+				ctx.Result.Warnings = append(ctx.Result.Warnings, msg)
+				ctx.ReportWarning(string(models.UseRegex), msg)
+			}
+
 			match := combineMatch(hostMatch, pathMatch)
 
 			// Build a stable dedup key
 			key := fmt.Sprintf(
-				"host=%s|path=%s|svc=%s|port=%d|scheme=%s",
+				"host=%s|path=%s|pathtype=%s|useregex=%t|svc=%s|port=%d|scheme=%s",
 				rule.Host,
 				path.Path,
+				*path.PathType,
+				useRegex,
 				svc.Name,
 				svc.Port.Number,
 				scheme,
@@ -105,6 +120,12 @@ func BuildIngressRoute(ctx configs.Context) error {
 
 	ctx.Result.IngressRoutes = append(ctx.Result.IngressRoutes, ingressRoute)
 
+	if useRegex {
+		ctx.ReportConverted(string(models.UseRegex))
+	}
+
+	ctx.ReportConverted(string(models.UseRegex))
+
 	return nil
 }
 
@@ -128,22 +149,35 @@ func buildHostMatch(host string) string {
 	return fmt.Sprintf("Host(`%s`)", host)
 }
 
-func buildPathMatch(path netv1.HTTPIngressPath) string {
+func buildPathMatch(path netv1.HTTPIngressPath, useRegex bool) (string, bool) {
 	pth := path.Path
 	if pth == "" {
 		pth = "/"
 	}
 
+	if useRegex {
+		regex := pth
+		if !strings.HasPrefix(regex, "^") {
+			regex = "^" + regex
+		}
+
+		if _, err := regexp.Compile(regex); err == nil {
+			return fmt.Sprintf("PathRegexp(`%s`)", regex), true
+		}
+
+		// invalid regex
+		return fmt.Sprintf("PathPrefix(`%s`)", pth), false
+	}
+
 	switch *path.PathType {
 	case netv1.PathTypeExact:
-		return fmt.Sprintf("Path(`%s`)", pth)
+		return fmt.Sprintf("Path(`%s`)", pth), true
 	case netv1.PathTypePrefix:
-		return fmt.Sprintf("PathPrefix(`%s`)", pth)
+		return fmt.Sprintf("PathPrefix(`%s`)", pth), true
 	case netv1.PathTypeImplementationSpecific:
-		// Best-effort: treat as Prefix (same as most ingress controllers do)
-		return fmt.Sprintf("PathPrefix(`%s`)", pth)
+		return fmt.Sprintf("PathPrefix(`%s`)", pth), true
 	default:
-		return fmt.Sprintf("PathPrefix(`%s`)", pth)
+		return fmt.Sprintf("PathPrefix(`%s`)", pth), true
 	}
 }
 

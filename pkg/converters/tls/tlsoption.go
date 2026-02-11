@@ -6,7 +6,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func emitTLSOption(ctx configs.Context, secretName string) {
+func emitTLSOption(ctx configs.Context, secretName, clientAuthType string) {
 	if ctx.Result.TLSOptionRefs == nil {
 		ctx.Result.TLSOptionRefs = make(map[string]string)
 	}
@@ -24,7 +24,7 @@ func emitTLSOption(ctx configs.Context, secretName string) {
 		},
 		Spec: traefik.TLSOptionSpec{
 			ClientAuth: traefik.ClientAuth{
-				ClientAuthType: "RequireAndVerifyClientCert",
+				ClientAuthType: clientAuthType,
 				SecretNames:    []string{secretName},
 			},
 		},

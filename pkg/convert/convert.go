@@ -38,6 +38,7 @@ func Run(ctx configs.Context, opts configs.Options) error {
 	middleware.EnableUnderscoresInHeaders(ctx)
 	middleware.ExtraAnnotations(ctx)
 	middleware.ProxyBuffering(ctx)
+	middleware.HandleAuthURL(ctx)
 
 	if err := middleware.ProxyCookiePath(ctx, opts); err != nil {
 		return err

@@ -29,6 +29,7 @@ out/
 # dropping files used for testing
 ingress.yaml
 prom_ingress.yaml
+annotations.*
 
 # dropping all locally built binaries generated from this repository
 ingress-traefik-converter_*

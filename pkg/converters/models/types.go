@@ -6,6 +6,9 @@ const (
 	AuthType             Annotation = "nginx.ingress.kubernetes.io/auth-type"
 	AuthSecret           Annotation = "nginx.ingress.kubernetes.io/auth-secret" //nolint:gosec
 	AuthRealm            Annotation = "nginx.ingress.kubernetes.io/auth-realm"
+	AuthTLSVerifyClient  Annotation = "nginx.ingress.kubernetes.io/auth-tls-verify-client"
+	AuthTLSSecret        Annotation = "nginx.ingress.kubernetes.io/auth-tls-secret" //nolint:gosec
+	AuthURL              Annotation = "nginx.ingress.kubernetes.io/auth-url"
 	ProxyBodySize        Annotation = "nginx.ingress.kubernetes.io/proxy-body-size"
 	ConfigurationSnippet Annotation = "nginx.ingress.kubernetes.io/configuration-snippet"
 	EnableCORS           Annotation = "nginx.ingress.kubernetes.io/enable-cors"
@@ -33,12 +36,16 @@ const (
 	ProxyCookiePath      Annotation = "nginx.ingress.kubernetes.io/proxy-cookie-path"
 	ServerSnippet        Annotation = "nginx.ingress.kubernetes.io/server-snippet"
 	UnderscoresInHeaders Annotation = "nginx.ingress.kubernetes.io/enable-underscores-in-headers"
+	UseRegex             Annotation = "nginx.ingress.kubernetes.io/use-regex"
 )
 
 var AllAnnotations = []Annotation{
 	AuthType,
 	AuthSecret,
 	AuthRealm,
+	AuthTLSVerifyClient,
+	AuthTLSSecret,
+	AuthURL,
 	ProxyBodySize,
 	ConfigurationSnippet,
 	EnableCORS,
@@ -66,6 +73,7 @@ var AllAnnotations = []Annotation{
 	ProxyCookiePath,
 	ServerSnippet,
 	UnderscoresInHeaders,
+	UseRegex,
 }
 
 func (a Annotation) String() string {
